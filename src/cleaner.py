@@ -1,17 +1,6 @@
-"""
-Cleaner Module (Layer 1)
-
-Handles data cleaning operations:
-- Type casting for dirty attributes (string "85" → int 85)
-- Null value handling (median imputation for influence)
-- Range clamping (150 → 100)
-- Deduplication (by normalized ID, keep first)
-- Ghost reference filtering
-- Dirty CSV row handling (non-numeric trust/rivalry/betrayal_prob)
-"""
-
 import statistics
-from typing import Any
+from typing import Any, Optional
+from pydantic import BaseModel, Field, field_validator, ValidationError
 
 
 def _safe_numeric(value: Any, min_val: float = None, max_val: float = None,
@@ -33,38 +22,98 @@ def _safe_numeric(value: Any, min_val: float = None, max_val: float = None,
     return num
 
 
+class Representative(BaseModel):
+    id: str
+    name: str = ""
+    faction: str = ""
+    influence: Optional[float] = None
+
+    model_config = {"extra": "allow"}
+
+    @field_validator('influence', mode='before')
+    @classmethod
+    def parse_influence(cls, v: Any) -> Optional[float]:
+        return _safe_numeric(v, min_val=0, max_val=100)
+
+
+class Proposal(BaseModel):
+    id: str
+    title: str = ""
+    sponsor: str = ""
+    priority: float = 5.0
+
+    model_config = {"extra": "allow"}
+
+    @field_validator('priority', mode='before')
+    @classmethod
+    def parse_priority(cls, v: Any) -> float:
+        res = _safe_numeric(v, min_val=1, max_val=10, default=5.0)
+        return res if res is not None else 5.0
+
+
+class Objection(BaseModel):
+    rep_id: str = ""
+    proposal_id: str = ""
+    severity: float = 5.0
+
+    model_config = {"extra": "allow"}
+
+    @field_validator('severity', mode='before')
+    @classmethod
+    def parse_severity(cls, v: Any) -> float:
+        res = _safe_numeric(v, min_val=1, max_val=10, default=5.0)
+        return res if res is not None else 5.0
+
+
+class Relation(BaseModel):
+    from_id: str = Field(alias="from", default="")
+    to_id: str = Field(alias="to", default="")
+    trust: float = 0.0
+    rivalry: float = 50.0
+    betrayal_prob: float = 0.5
+
+    model_config = {"extra": "allow", "populate_by_name": True}
+
+    @field_validator('trust', mode='before')
+    @classmethod
+    def parse_trust(cls, v: Any) -> float:
+        res = _safe_numeric(v, min_val=0, max_val=100, default=0.0)
+        return res if res is not None else 0.0
+
+    @field_validator('rivalry', mode='before')
+    @classmethod
+    def parse_rivalry(cls, v: Any) -> float:
+        res = _safe_numeric(v, min_val=0, max_val=100, default=50.0)
+        return res if res is not None else 50.0
+
+    @field_validator('betrayal_prob', mode='before')
+    @classmethod
+    def parse_betrayal(cls, v: Any) -> float:
+        res = _safe_numeric(v, min_val=0.0, max_val=1.0, default=0.5)
+        return res if res is not None else 0.5
+
+
 def clean_representatives(representatives: list[dict]) -> list[dict]:
-    """
-    Clean representatives data:
-    1. Cast influence to numeric
-    2. Clamp influence to [0, 100]
-    3. Impute null influence with median of valid values
-    4. Deduplicate by normalized ID (keep first occurrence)
-    """
-    # Step 1: Deduplicate by ID, keeping first occurrence
     seen_ids = set()
     deduped = []
-    for rep in representatives:
-        rep_id = rep.get("id", "")
-        if rep_id and rep_id not in seen_ids:
-            seen_ids.add(rep_id)
-            deduped.append(rep)
-
-    # Step 2: Cast influence to numeric, clamp to [0, 100], track valid values
     valid_influences = []
-    for rep in deduped:
-        raw_influence = rep.get("influence")
-        parsed = _safe_numeric(raw_influence, min_val=0, max_val=100)
-        rep["influence"] = parsed
-        if parsed is not None:
-            valid_influences.append(parsed)
 
-    # Step 3: Impute null influence with median
-    if valid_influences:
-        median_influence = statistics.median(valid_influences)
-    else:
-        median_influence = 50  # Fallback default
+    for rep_dict in representatives:
+        if not rep_dict.get("id"):
+            continue
 
+        try:
+            rep = Representative(**rep_dict)
+        except ValidationError:
+            continue
+
+        if rep.id not in seen_ids:
+            seen_ids.add(rep.id)
+            if rep.influence is not None:
+                valid_influences.append(rep.influence)
+            deduped.append(rep.model_dump(by_alias=True))
+
+    median_influence = statistics.median(valid_influences) if valid_influences else 50.0
     for rep in deduped:
         if rep["influence"] is None:
             rep["influence"] = median_influence
@@ -73,154 +122,80 @@ def clean_representatives(representatives: list[dict]) -> list[dict]:
 
 
 def clean_proposals(proposals: list[dict], valid_rep_ids: set[str]) -> list[dict]:
-    """
-    Clean proposals data:
-    1. Cast priority to numeric, clamp to [1, 10]
-    2. Deduplicate by ID (keep first occurrence)
-    3. Filter out proposals with ghost sponsors (sponsors not in valid_rep_ids)
-    """
-    # Step 1: Deduplicate by ID, keeping first occurrence
     seen_ids = set()
-    deduped = []
-    for prop in proposals:
-        prop_id = prop.get("id", "")
-        if prop_id and prop_id not in seen_ids:
-            seen_ids.add(prop_id)
-            deduped.append(prop)
-
-    # Step 2: Cast priority to numeric, clamp to [1, 10]
-    for prop in deduped:
-        raw_priority = prop.get("priority")
-        parsed = _safe_numeric(raw_priority, min_val=1, max_val=10, default=5)
-        prop["priority"] = parsed
-
-    # Step 3: Filter out proposals with ghost sponsors
     cleaned = []
-    for prop in deduped:
-        sponsor = prop.get("sponsor", "")
-        if sponsor in valid_rep_ids:
-            cleaned.append(prop)
+
+    for prop_dict in proposals:
+        if not prop_dict.get("id"):
+            continue
+
+        try:
+            prop = Proposal(**prop_dict)
+        except ValidationError:
+            continue
+
+        if prop.id not in seen_ids:
+            seen_ids.add(prop.id)
+            if prop.sponsor in valid_rep_ids:
+                cleaned.append(prop.model_dump(by_alias=True))
 
     return cleaned
 
 
 def clean_objections(objections: list[dict], valid_rep_ids: set[str],
                      valid_proposal_ids: set[str]) -> list[dict]:
-    """
-    Clean objections data:
-    1. Cast severity to numeric, clamp to [1, 10]
-    2. Filter ghost references (rep_id or proposal_id not in valid sets)
-    3. Deduplicate by (rep_id, proposal_id) pair - keep first occurrence
-    """
-    cleaned = []
     seen_pairs = set()
+    cleaned = []
 
-    for obj in objections:
-        rep_id = obj.get("rep_id", "")
-        proposal_id = obj.get("proposal_id", "")
-
-        # Filter ghost references
-        if rep_id not in valid_rep_ids:
-            continue
-        if proposal_id not in valid_proposal_ids:
+    for obj_dict in objections:
+        try:
+            obj = Objection(**obj_dict)
+        except ValidationError:
             continue
 
-        # Deduplicate by (rep_id, proposal_id) pair
-        pair_key = (rep_id, proposal_id)
-        if pair_key in seen_pairs:
+        if obj.rep_id not in valid_rep_ids or obj.proposal_id not in valid_proposal_ids:
             continue
-        seen_pairs.add(pair_key)
 
-        # Cast severity to numeric, clamp to [1, 10]
-        raw_severity = obj.get("severity")
-        parsed = _safe_numeric(raw_severity, min_val=1, max_val=10)
-        if parsed is None:
-            # If severity is completely invalid, use median severity (5)
-            parsed = 5.0
-        obj["severity"] = parsed
-        cleaned.append(obj)
+        pair = (obj.rep_id, obj.proposal_id)
+        if pair not in seen_pairs:
+            seen_pairs.add(pair)
+            cleaned.append(obj.model_dump(by_alias=True))
 
     return cleaned
 
 
 def clean_relations(relations: list[dict], valid_rep_ids: set[str]) -> list[dict]:
-    """
-    Clean relations data:
-    1. Cast trust, rivalry, betrayal_prob to numeric with appropriate ranges
-    2. Filter ghost references (from/to not in valid_rep_ids)
-    3. Handle dirty CSV rows (non-numeric values)
-    4. Deduplicate by (from, to) pair - keep first occurrence
-    5. Clamp values: trust [0,100], rivalry [0,100], betrayal_prob [0.0, 1.0]
-    """
-    cleaned = []
     seen_pairs = set()
+    cleaned = []
 
-    for rel in relations:
-        from_id = rel.get("from", "")
-        to_id = rel.get("to", "")
-
-        # Filter ghost references
-        if from_id not in valid_rep_ids or to_id not in valid_rep_ids:
+    for rel_dict in relations:
+        try:
+            rel = Relation(**rel_dict)
+        except ValidationError:
             continue
 
-        # Skip self-relations
-        if from_id == to_id:
+        if rel.from_id not in valid_rep_ids or rel.to_id not in valid_rep_ids:
             continue
 
-        # Deduplicate by (from, to) pair
-        pair_key = (from_id, to_id)
-        if pair_key in seen_pairs:
+        if rel.from_id == rel.to_id:
             continue
-        seen_pairs.add(pair_key)
 
-        # Cast and clamp trust [0, 100]
-        raw_trust = rel.get("trust")
-        trust = _safe_numeric(raw_trust, min_val=0, max_val=100)
-        if trust is None:
-            trust = 0.0  # Default: no trust if missing
-        rel["trust"] = trust
-
-        # Cast and clamp rivalry [0, 100]
-        raw_rivalry = rel.get("rivalry")
-        rivalry = _safe_numeric(raw_rivalry, min_val=0, max_val=100)
-        if rivalry is None:
-            rivalry = 50.0  # Default: moderate rivalry if missing
-        rel["rivalry"] = rivalry
-
-        # Cast and clamp betrayal_prob [0.0, 1.0]
-        raw_betrayal = rel.get("betrayal_prob")
-        betrayal_prob = _safe_numeric(raw_betrayal, min_val=0.0, max_val=1.0)
-        if betrayal_prob is None:
-            betrayal_prob = 0.5  # Default: uncertain if missing
-        rel["betrayal_prob"] = betrayal_prob
-
-        cleaned.append(rel)
+        pair = (rel.from_id, rel.to_id)
+        if pair not in seen_pairs:
+            seen_pairs.add(pair)
+            cleaned.append(rel.model_dump(by_alias=True))
 
     return cleaned
 
 
 def clean_all_data(data: dict[str, list[dict]]) -> dict[str, list[dict]]:
-    """
-    Run the full cleaning pipeline on all datasets.
-
-    Processing order matters:
-    1. Clean representatives first (to get valid rep IDs)
-    2. Clean proposals (needs valid rep IDs for ghost sponsor filtering)
-    3. Clean objections (needs valid rep IDs and proposal IDs)
-    4. Clean relations (needs valid rep IDs)
-    """
-    # Step 1: Clean representatives
     representatives = clean_representatives(data["representatives"])
     valid_rep_ids = {rep["id"] for rep in representatives}
 
-    # Step 2: Clean proposals (filter ghost sponsors)
     proposals = clean_proposals(data["proposals"], valid_rep_ids)
     valid_proposal_ids = {prop["id"] for prop in proposals}
 
-    # Step 3: Clean objections (filter ghost references)
     objections = clean_objections(data["objections"], valid_rep_ids, valid_proposal_ids)
-
-    # Step 4: Clean relations (filter ghost references, handle dirty CSV)
     relations = clean_relations(data["relations"], valid_rep_ids)
 
     return {

@@ -66,3 +66,11 @@ coverage.xml
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Markdown Documentation (Exclude all except README)
+*.md
+!README.md
+!ISSUES.md
+
+# Project Planning
+plans/
