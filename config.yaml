@@ -1,0 +1,14 @@
+# Phantom Consensus - Configuration
+# Threshold values for strategic decision-making
+
+thresholds:
+  BETRAYAL: 0.3          # Exclude reps with betrayal_prob > 0.3 (Trojan Horse filter)
+  TRUST: 60              # Minimum bidirectional trust for alliance
+  ALLIANCE_STRENGTH: 40  # Minimum relationship_score for alliance
+  OBJECTION_CAP: 50      # Reject proposals with objection_weight > 50 (Poison Pill)
+  FACTION_BETRAYAL: 0.5  # Flag infiltrators (betrays faction > 50%)
+
+# Default paths
+paths:
+  input_dir: "data/raw"
+  output_file: "output/final_agreement.json"

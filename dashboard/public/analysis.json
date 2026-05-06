@@ -1,0 +1,350 @@
+{
+  "config": {
+    "BETRAYAL": 0.3,
+    "TRUST": 60,
+    "ALLIANCE_STRENGTH": 40,
+    "OBJECTION_CAP": 50,
+    "FACTION_BETRAYAL": 0.5
+  },
+  "pipeline": {
+    "raw_stats": {
+      "representatives_loaded": 8,
+      "proposals_loaded": 6,
+      "objections_loaded": 8,
+      "relations_loaded": 16
+    },
+    "clean_stats": {
+      "representatives_after": 6,
+      "proposals_after": 4,
+      "objections_after": 6,
+      "relations_after": 15,
+      "reps_removed": 2,
+      "proposals_removed": 2,
+      "objections_removed": 2,
+      "relations_removed": 1
+    }
+  },
+  "representatives": [
+    {
+      "id": "rep_001",
+      "name": "Senator Aria",
+      "faction": "Progressives",
+      "influence": 85.0,
+      "status": "supporter",
+      "reason": "Selected as supporter",
+      "avg_betrayal": 0.245,
+      "faction_betrayal_avg": 0.05
+    },
+    {
+      "id": "rep_002",
+      "name": "Councilor Blake",
+      "faction": "Moderates",
+      "influence": 70.0,
+      "status": "eligible",
+      "reason": "",
+      "avg_betrayal": 0.3,
+      "faction_betrayal_avg": 0.25
+    },
+    {
+      "id": "rep_003",
+      "name": "Minister Chen",
+      "faction": "Conservatives",
+      "influence": 95.0,
+      "status": "supporter",
+      "reason": "Selected as supporter",
+      "avg_betrayal": 0.29,
+      "faction_betrayal_avg": 0.0
+    },
+    {
+      "id": "rep_004",
+      "name": "Delegate Davis",
+      "faction": "Progressives",
+      "influence": 92.0,
+      "status": "supporter",
+      "reason": "Selected as supporter",
+      "avg_betrayal": 0.11,
+      "faction_betrayal_avg": 0.02
+    },
+    {
+      "id": "rep_005",
+      "name": "Ambassador Ellis",
+      "faction": "Moderates",
+      "influence": 100,
+      "status": "excluded",
+      "reason": "Trojan Horse (avg betrayal > 0.3)",
+      "avg_betrayal": 0.575,
+      "faction_betrayal_avg": 0.15
+    },
+    {
+      "id": "rep_006",
+      "name": "Director Fox",
+      "faction": "Independents",
+      "influence": 92.0,
+      "status": "excluded",
+      "reason": "Trojan Horse (avg betrayal > 0.3)",
+      "avg_betrayal": 0.775,
+      "faction_betrayal_avg": 0.0
+    }
+  ],
+  "proposals": [
+    {
+      "id": "prop_001",
+      "title": "Infrastructure Modernization Act",
+      "sponsor": "rep_001",
+      "priority": 8.0,
+      "objection_weight": 760.0,
+      "viability": 3.778,
+      "status": "rejected",
+      "reason": "Poison Pill (objection_weight 760 > cap 50)"
+    },
+    {
+      "id": "prop_002",
+      "title": "Budget Reconciliation Framework",
+      "sponsor": "rep_003",
+      "priority": 10.0,
+      "objection_weight": 425.0,
+      "viability": 7.049,
+      "status": "rejected",
+      "reason": "Poison Pill (objection_weight 425 > cap 50)"
+    },
+    {
+      "id": "prop_003",
+      "title": "Environmental Protection Initiative",
+      "sponsor": "rep_004",
+      "priority": 9.5,
+      "objection_weight": 350.0,
+      "viability": 7.191,
+      "status": "selected",
+      "reason": "Passed all filters"
+    },
+    {
+      "id": "prop_004",
+      "title": "Emergency Response Protocol",
+      "sponsor": "rep_006",
+      "priority": 10.0,
+      "objection_weight": 1440.0,
+      "viability": 0.0,
+      "status": "rejected",
+      "reason": "Poison Pill (objection_weight 1440 > cap 50)"
+    }
+  ],
+  "relations": [
+    {
+      "from": "rep_001",
+      "to": "rep_004",
+      "trust": 85.0,
+      "rivalry": 10.0,
+      "betrayal_prob": 0.05,
+      "relationship_score": 80.75
+    },
+    {
+      "from": "rep_001",
+      "to": "rep_003",
+      "trust": 20.0,
+      "rivalry": 80.0,
+      "betrayal_prob": 0.65,
+      "relationship_score": 7.0
+    },
+    {
+      "from": "rep_002",
+      "to": "rep_005",
+      "trust": 75.0,
+      "rivalry": 15.0,
+      "betrayal_prob": 0.25,
+      "relationship_score": 56.25
+    },
+    {
+      "from": "rep_003",
+      "to": "rep_002",
+      "trust": 60.0,
+      "rivalry": 35.0,
+      "betrayal_prob": 0.3,
+      "relationship_score": 42.0
+    },
+    {
+      "from": "rep_004",
+      "to": "rep_001",
+      "trust": 90.0,
+      "rivalry": 5.0,
+      "betrayal_prob": 0.02,
+      "relationship_score": 88.2
+    },
+    {
+      "from": "rep_005",
+      "to": "rep_002",
+      "trust": 80.0,
+      "rivalry": 10.0,
+      "betrayal_prob": 0.15,
+      "relationship_score": 68.0
+    },
+    {
+      "from": "rep_003",
+      "to": "rep_005",
+      "trust": 55.0,
+      "rivalry": 40.0,
+      "betrayal_prob": 0.45,
+      "relationship_score": 30.25
+    },
+    {
+      "from": "rep_006",
+      "to": "rep_001",
+      "trust": 90.0,
+      "rivalry": 5.0,
+      "betrayal_prob": 0.75,
+      "relationship_score": 22.5
+    },
+    {
+      "from": "rep_006",
+      "to": "rep_003",
+      "trust": 85.0,
+      "rivalry": 10.0,
+      "betrayal_prob": 0.8,
+      "relationship_score": 17.0
+    },
+    {
+      "from": "rep_001",
+      "to": "rep_006",
+      "trust": 70.0,
+      "rivalry": 20.0,
+      "betrayal_prob": 0.1,
+      "relationship_score": 63.0
+    },
+    {
+      "from": "rep_003",
+      "to": "rep_006",
+      "trust": 75.0,
+      "rivalry": 15.0,
+      "betrayal_prob": 0.12,
+      "relationship_score": 66.0
+    },
+    {
+      "from": "rep_002",
+      "to": "rep_003",
+      "trust": 0.0,
+      "rivalry": 25.0,
+      "betrayal_prob": 0.35,
+      "relationship_score": 0.0
+    },
+    {
+      "from": "rep_004",
+      "to": "rep_005",
+      "trust": 65.0,
+      "rivalry": 50.0,
+      "betrayal_prob": 0.2,
+      "relationship_score": 52.0
+    },
+    {
+      "from": "rep_005",
+      "to": "rep_006",
+      "trust": 70.0,
+      "rivalry": 30.0,
+      "betrayal_prob": 1.0,
+      "relationship_score": 0.0
+    },
+    {
+      "from": "rep_001",
+      "to": "rep_002",
+      "trust": 80.0,
+      "rivalry": 20.0,
+      "betrayal_prob": 0.18,
+      "relationship_score": 65.6
+    }
+  ],
+  "objections": [
+    {
+      "rep_id": "rep_003",
+      "proposal_id": "prop_001",
+      "severity": 8.0,
+      "influence": 95.0,
+      "weighted_impact": 760.0
+    },
+    {
+      "rep_id": "rep_001",
+      "proposal_id": "prop_002",
+      "severity": 5.0,
+      "influence": 85.0,
+      "weighted_impact": 425.0
+    },
+    {
+      "rep_id": "rep_002",
+      "proposal_id": "prop_003",
+      "severity": 5.0,
+      "influence": 70.0,
+      "weighted_impact": 350.0
+    },
+    {
+      "rep_id": "rep_001",
+      "proposal_id": "prop_004",
+      "severity": 1,
+      "influence": 85.0,
+      "weighted_impact": 85.0
+    },
+    {
+      "rep_id": "rep_003",
+      "proposal_id": "prop_004",
+      "severity": 9.0,
+      "influence": 95.0,
+      "weighted_impact": 855.0
+    },
+    {
+      "rep_id": "rep_005",
+      "proposal_id": "prop_004",
+      "severity": 5.0,
+      "influence": 100,
+      "weighted_impact": 500.0
+    }
+  ],
+  "factions": {
+    "Progressives": {
+      "members": [
+        "rep_001",
+        "rep_004"
+      ],
+      "infiltrators": [],
+      "avg_influence": 88.5,
+      "member_count": 2
+    },
+    "Moderates": {
+      "members": [
+        "rep_002",
+        "rep_005"
+      ],
+      "infiltrators": [],
+      "avg_influence": 85.0,
+      "member_count": 2
+    },
+    "Conservatives": {
+      "members": [
+        "rep_003"
+      ],
+      "infiltrators": [],
+      "avg_influence": 95.0,
+      "member_count": 1
+    },
+    "Independents": {
+      "members": [
+        "rep_006"
+      ],
+      "infiltrators": [],
+      "avg_influence": 92.0,
+      "member_count": 1
+    }
+  },
+  "alliances": [
+    {
+      "pair": [
+        "rep_001",
+        "rep_004"
+      ],
+      "score_a_to_b": 80.75,
+      "score_b_to_a": 88.2,
+      "trust_a_to_b": 85.0,
+      "trust_b_to_a": 90.0
+    }
+  ],
+  "trojan_horses": [
+    "rep_005",
+    "rep_006"
+  ],
+  "infiltrators": []
+}
